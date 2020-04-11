@@ -32,9 +32,9 @@ chown -R $SUDO_USER:$SUDO_USER nodejs
 # Network Manager #
 ###################
 
-## Install Network Manager ( will also add nmcli)
+## Install Network Manager
 ## DOCS: https://manpages.debian.org/unstable/network-manager/nmcli.1.en.html
-#apt install network-manager
+#apt-get install network-manager
 
 ## Make sure wpa_supplicant is not running
 ## If it is, kill the process
