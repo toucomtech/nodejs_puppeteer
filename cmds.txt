@@ -1,0 +1,73 @@
+#################
+# RUN WITH SUDO #
+#################
+
+# Update apt
+apt-get update
+
+# Install chromium if not already installed
+apt-get install -y chromium-browser
+
+# Download nodejs specific to your processor
+# Install nodejs and remove artifacts
+wget https://nodejs.org/dist/v12.16.2/node-v12.16.2-linux-armv7l.tar.xz
+tar -xf node-v12.16.2-linux-armv7l.tar.xz
+cd node-v12.16.2-linux-armv7l
+cp -R * /usr/local
+cd ..
+rm node-v12.16.2-linux-armv7l.tar.xz
+rm -Rf node-v12.16.2-linux-armv7l
+
+# Initialize nodejs directory and install puppeteer-core
+mkdir nodejs
+cd nodejs
+npm init -y
+npm i puppeteer-core
+cd ..
+
+# Restore permissions to user account
+chown -R $SUDO_USER:$SUDO_USER nodejs
+
+###################
+# Network Manager #
+###################
+
+## Install Network Manager
+## DOCS: https://manpages.debian.org/unstable/network-manager/nmcli.1.en.html
+#apt-get install network-manager
+
+## Make sure wpa_supplicant is not running
+## If it is, kill the process
+# ps -aux|grep wpa
+# kill -9 <PID>
+## Then restart NetworkManager
+#systemctl restart NetworkManager
+## Check Status
+#systemctl status NetworkManager
+
+## Monitor messages on the D-BUS
+#busctl monitor org.freedesktop.NetworkManager
+
+## Show list of interfaces
+#nmcli device status
+
+# Check connectivity status (none, portal, limited, full, unknown)
+#nmcli networking connectivity
+
+## Radio TX Control
+## Show radio switches status, or enable and disable the switches.
+#nmcli radio {all | wifi | wwan}
+
+## Get list of Wireless networks (Wifi interface)
+## Make sure it's not unavailable under status
+#nmcli dev wifi list
+
+## Request to re-scan for available access points.
+#nmcli dev wifi rescan
+
+## Connect to network by SSID and KEY (if not Open)
+#nmcli dev wifi connect <SSID> [password]
+
+## Disconnect a device from wifi and prevent the device from automatically 
+## activating further connections without user/manual intervention.
+#nmcli dev disconnect wlan0
