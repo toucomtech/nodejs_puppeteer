@@ -1,0 +1,24 @@
+{
+  "name": "nodejs_puppeteer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/comptonben/nodejs_puppeteer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/comptonben/nodejs_puppeteer/issues"
+  },
+  "homepage": "https://github.com/comptonben/nodejs_puppeteer#readme",
+  "dependencies": {
+    "puppeteer-core": "^2.1.1"
+  },
+  "devDependencies": {}
+}
