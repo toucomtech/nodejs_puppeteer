@@ -20,15 +20,15 @@ def main():
 	out  = subprocess.run(['nmcli','--terse','dev'],stdout=subprocess.PIPE)
 	lines = out.stdout.decode("utf-8").split('\n')
 	#print(lines)
-	state = lines[1].split(':')[2]
-	print("INTERFACE={} | STATE={}".format(lines[1][1],state))
+	wifi_interface = lines[1].split(":")
+	state = wifi_interface[2]
+	print("INTERFACE={} | STATE={}".format(wifi_interface[1],state))
 
 	if state =='disconnected':
-		subprocess.run(['sudo','nmcli','dev','wifi','rescan'])
-		# scan for networks and filter for open ones
-		p1 = subprocess.run(['sudo','nmcli','--terse','-f','SSID,SIGNAL,SECURITY','dev','wifi'], stdout=subprocess.PIPE)
-		#p2 = subprocess.run(['grep','\\-\\-'], stdin=p1.stdout)
-		
+		# Force scan
+		subprocess.run(['nmcli','dev','wifi','rescan'])
+		# Get list of wifi networks
+		p1 = subprocess.run(['nmcli','--terse','-f','SSID,SIGNAL,SECURITY','dev','wifi'], stdout=subprocess.PIPE)
 		raw = p1.stdout.decode("utf-8").split('\n')
 		print(raw)
 		# filter for open actual ones (SSID can have --)
@@ -68,10 +68,10 @@ def main():
 				## ----------- ##
 
 				#disconnect from network
-				out = subprocess.run(['sudo','nmcli','dev','disconnect','wlan0'])
+				out = subprocess.run(['nmcli','dev','disconnect','wlan0'])
 				# Remove connection profile
 				# TODO: Use connection UUID instead
-				out  = subprocess.run(['sudo','nmcli','conn','delete',ssid])
+				out  = subprocess.run(['nmcli','conn','delete',ssid])
 			else:
 				print("Couldn't connect to {} or too slow".format(ssid))
 # call main()
