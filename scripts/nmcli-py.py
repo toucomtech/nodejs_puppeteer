@@ -17,7 +17,7 @@ def isOpen(ap):
 
 def main():
 	# device status (formatting output)
-	out  = subprocess.run(['nmcli','--mode','tabular','--terse','dev'],stdout=subprocess.PIPE)
+	out  = subprocess.run(['nmcli','--terse','dev'],stdout=subprocess.PIPE)
 	lines = out.stdout.decode("utf-8").split('\n')
 	#print(lines)
 	state = lines[1].split(':')[2]
@@ -26,7 +26,7 @@ def main():
 	if state =='disconnected':
 		subprocess.run(['sudo','nmcli','dev','wifi','rescan'])
 		# scan for networks and filter for open ones
-		p1 = subprocess.run(['sudo','nmcli','--mode','tabular','--terse','-f','SSID,SIGNAL,SECURITY','dev','wifi'], stdout=subprocess.PIPE)
+		p1 = subprocess.run(['sudo','nmcli','--terse','-f','SSID,SIGNAL,SECURITY','dev','wifi'], stdout=subprocess.PIPE)
 		#p2 = subprocess.run(['grep','\\-\\-'], stdin=p1.stdout)
 		
 		raw = p1.stdout.decode("utf-8").split('\n')
@@ -40,11 +40,12 @@ def main():
 		if open_aps != []:
 			# let's try to connect to the first one
 			ssid = open_aps[0][0]
-			subprocess.check_output(['nmcli','dev','wifi','connect',ssid])
+			#TODO: store connection UUID
+			out = subprocess.run(['nmcli','dev','wifi','connect',ssid])
 			# Connected?
 			conn = False
 			for i in range(5,0,-1):
-				out  = subprocess.run(['nmcli','--mode','tabular','--terse','dev'],stdout=subprocess.PIPE)
+				out  = subprocess.run(['nmcli','--terse','dev'],stdout=subprocess.PIPE)
 				lines = out.stdout.decode("utf-8").split('\n')
 				#print(lines)
 				state = lines[1].split(':')[2]
@@ -69,6 +70,7 @@ def main():
 				#disconnect from network
 				out = subprocess.run(['sudo','nmcli','dev','disconnect','wlan0'])
 				# Remove connection profile
+				# TODO: Use connection UUID instead
 				out  = subprocess.run(['sudo','nmcli','conn','delete',ssid])
 			else:
 				print("Couldn't connect to {} or too slow".format(ssid))
