@@ -20,9 +20,16 @@ def main():
 	out  = subprocess.run(['nmcli','--terse','dev'],stdout=subprocess.PIPE)
 	lines = out.stdout.decode("utf-8").split('\n')
 	#print(lines)
-	wifi_interface = lines[1].split(":")
-	state = wifi_interface[2]
-	print("INTERFACE={} | STATE={}".format(wifi_interface[1],state))
+	state = None
+	for i in lines:
+		info = i.split(':')
+		#print(info)
+		if len(info)<1:
+			break
+		if info[1] == 'wifi':
+			state = info[2]
+			break
+	print("INTERFACE=wifi | STATE={}".format(state))
 
 	if state =='disconnected':
 		# Force scan
@@ -48,7 +55,15 @@ def main():
 				out  = subprocess.run(['nmcli','--terse','dev'],stdout=subprocess.PIPE)
 				lines = out.stdout.decode("utf-8").split('\n')
 				#print(lines)
-				state = lines[1].split(':')[2]
+				state = None
+				for inter in lines:
+					info = inter.split(':')
+					#print(info)
+					if len(info)<1:
+						break
+					if info[1] == 'wifi':
+						state = info[2]
+						break
 				if state == 'connected':
 					conn = True
 					break
@@ -62,6 +77,11 @@ def main():
 					sys.stdout.flush()
 					time.sleep(1)
 				print()
+				out = subprocess.run(['nmcli','network','connectivity'], stdout=subprocess.PIPE)
+				ccnt = out.stdout.decode('utf-8').split('\n')[0]
+				print('Connectivity [{}]'.format(ccnt))
+				if ccnt != 'full':
+					exit()
 				## CALL PUPPET ##
 				print("---- RUNNING PUPPETEER ----")
 				subprocess.run(['node','../pup/'])
