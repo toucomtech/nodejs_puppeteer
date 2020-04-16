@@ -1,6 +1,6 @@
 ---
 - name: Initialize Raspberry
-  hosts: benc
+  hosts: pi
   become: yes
 
   vars:
@@ -68,6 +68,33 @@
       block: |
         auto lo
         iface lo inet loopback
+    tags: [never, configure]
+
+  - name: Add an alias for nmcli to run as superuser
+    lineinfile:
+      path: "{{ admin_home }}/.bashrc"
+      regexp: "^alias nmcli="
+      line: "alias nmcli=\"sudo nmcli\""
+      insert_after:
+        regexp: "^alias"
+    tags: [never, configure]
+
+  - name: Add an alias for ll
+    lineinfile:
+      path: "{{ admin_home}}/.bashrc"
+      regexp: "^alias ll="
+      line: "alias ll=\"ls -al\""
+      insert_after:
+        regexp: "^alias"
+    tags: [never, configure]
+
+  - name: Add nmcli command to sudoers file
+    lineinfile:
+      path: /etc/sudoers
+      regexp: "^{{ admin_user }} ALL=NOPASSWD"
+      line: "{{ admin_user }} ALL=NOPASSWD:/bin/nmcli"
+      insert_after: EOF
+    tags: [never, configure]
 
   - name: Download NodeJS
     get_url:
@@ -104,7 +131,8 @@
 
   - name: Clone Repo
     git:
-      repo: https://github.com/toucomtech/nodejs_puppeteer
+      repo: https://github.com/comptonben/nodejs_puppeteer
+      version: ansible_setup
       dest: "{{ admin_home }}/nodejs_puppeteer"
     tags: [never, configure]
 
@@ -145,6 +173,9 @@
     when: timezone is defined
     notify: restart rsyslog
     tags: [never, configure]
+
+  - name: Reboot the device
+    reboot:
 
   handlers:
   - name: restart rsyslog
