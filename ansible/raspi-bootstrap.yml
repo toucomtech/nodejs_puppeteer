@@ -1,0 +1,157 @@
+---
+- name: Initialize Raspberry
+  hosts: benc
+  become: yes
+
+  vars:
+    admin_user: "{{ lookup('pipe', 'id -un') }}"
+    admin_name: "{{ lookup('pipe', 'getent passwd `id -un`').split(':')[4].split(',')[0] }}"
+    admin_keys: "{{ lookup('fileglob', '~/.ssh/*.pub', wantlist=True) }}"
+    admin_home: "/home/{{ admin_user }}"
+    node_url: https://nodejs.org/dist/v12.16.2/node-v12.16.2-linux-armv7l.tar.xz
+    node_archive: node-v12.16.2-linux-armv7l.tar.xz
+    node_dir: node-v12.16.2-linux-armv7l
+    node_checksum: sha256:7210712073cc47aef684e8968e18d7a47cce7ba57e80e4cc10f328a8bbbc9aef
+
+  tasks:
+  - name: Create administrative user
+    user:
+      name: "{{ admin_user }}"
+      comment: "{{ admin_name }}"
+      password: "{{ lookup('password', inventory_hostname_short + '.secret encrypt=sha512_crypt length=20') }}"
+      update_password: on_create
+      groups: sudo,adm,dialout,cdrom,audio,video,plugdev,games,users,input,netdev,gpio,i2c,spi
+      state: present
+    tags: [never, initialize]
+
+  - name: Install public key(s) for admin
+    authorized_key:
+      user: "{{ admin_user }}"
+      key: "{{ item }}"
+      state: present
+    with_file:
+      "{{ admin_keys }}"
+    when: admin_keys is defined and admin_keys | length
+    tags: [never, initialize]
+
+  - name: Change password for built-in account
+    user:
+      name: pi
+      password: "{{ lookup('password', inventory_hostname_short + '.secret encrypt=sha512_crypt length=20') }}"
+      update_password: always
+      state: present
+    tags: [never, initialize]
+
+  - name: Disable built-in account 
+    user:
+      name: pi
+      password: "*"
+      update_password: always
+      state: present
+    tags: [never, configure]
+
+  - name: Update apt
+    apt: 
+      update_cache: yes
+    tags: [never, configure]
+  
+  - name: Install apt packages
+    apt:
+      pkg:
+      - network-manager
+      - chromium-browser
+    tags: [never, configure]
+
+  - name: Update /etc/network/interfaces with interfaces that won't be managed
+    blockinfile:
+      path: /etc/network/interfaces
+      block: |
+        auto lo
+        iface lo inet loopback
+
+  - name: Download NodeJS
+    get_url:
+      url: "{{ node_url }}"
+      dest: "{{ admin_home }}"
+      checksum: sha256:7210712073cc47aef684e8968e18d7a47cce7ba57e80e4cc10f328a8bbbc9aef
+    tags: [never, configure]
+  
+  - name: Extract NodeJS
+    unarchive:
+      src: "{{ admin_home }}/{{ node_archive }}"
+      dest: "{{ admin_home }}"
+      remote_src: yes
+    tags: [never, configure]
+
+  - name: Remove tarball
+    file:
+      path: "{{ admin_home }}/{{ node_archive }}"
+      state: absent
+    tags: [never, configure]
+
+  - name: Copy NodeJS
+    copy:
+      src: "{{ admin_home }}/{{ node_dir }}/"
+      dest: "/usr/local"
+      remote_src: yes
+    tags: [never, configure]
+  
+  - name: Remove NodeJS Install Directory
+    file:
+      path: "{{ admin_home }}/{{ node_dir }}/"
+      state: absent
+    tags: [never, configure]
+
+  - name: Clone Repo
+    git:
+      repo: https://github.com/toucomtech/nodejs_puppeteer
+      dest: "{{ admin_home }}/nodejs_puppeteer"
+    tags: [never, configure]
+
+  - name: Install npm dependencies
+    npm:
+      path: "{{ admin_home }}/nodejs_puppeteer"
+    tags: [never, configure]
+  
+  - name: Change npm dependencies ownership
+    file:
+      path: "{{ admin_home }}/nodejs_puppeteer"
+      state: directory
+      recurse: yes
+      owner: "{{ admin_user }}"
+      group: "{{ admin_user }}"
+    tags: [never, configure]
+
+  - name: Set the hostname
+    hostname: 
+      name: "{{ hostname }}"
+    when: hostname is defined
+    notify: [restart rsyslog, restart networking, restart avahi-daemon]
+    tags: [never, configure]
+
+  - name: Update /etc/hosts
+    lineinfile:
+      dest: /etc/hosts
+      state: present
+      regexp: "^127.0.1.1"
+      line: "127.0.1.1  {{ hostname }}"
+      insertafter: EOF
+    when: hostname is defined
+    tags: [never, configure]
+
+  - name: Set the timezone
+    timezone: 
+      name: "{{ timezone }}"
+    when: timezone is defined
+    notify: restart rsyslog
+    tags: [never, configure]
+
+  handlers:
+  - name: restart rsyslog
+    service: name=rsyslog state=restarted
+  
+  - name: restart networking
+    service: name=networking state=restarted
+
+  - name: restart avahi-daemon
+    service: name=avahi-daemon state=restarted
