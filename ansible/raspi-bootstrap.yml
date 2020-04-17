@@ -73,34 +73,32 @@
   - name: Add an alias for nmcli to run as superuser
     lineinfile:
       path: "{{ admin_home }}/.bashrc"
-      regexp: "^alias nmcli="
+      regexp: '^alias nmcli='
       line: "alias nmcli=\"sudo nmcli\""
-      insert_after:
-        regexp: "^alias"
+      insertafter: 'alias'
     tags: [never, configure]
 
   - name: Add an alias for ll
     lineinfile:
       path: "{{ admin_home}}/.bashrc"
-      regexp: "^alias ll="
+      regexp: '^alias ll='
       line: "alias ll=\"ls -al\""
-      insert_after:
-        regexp: "^alias"
+      insertafter: '^alias'
     tags: [never, configure]
 
   - name: Add nmcli command to sudoers file
     lineinfile:
       path: /etc/sudoers
-      regexp: "^{{ admin_user }} ALL=NOPASSWD"
+      regexp: '^{{ admin_user }} ALL=NOPASSWD'
       line: "{{ admin_user }} ALL=NOPASSWD:/bin/nmcli"
-      insert_after: EOF
+      insertafter: EOF
     tags: [never, configure]
 
   - name: Download NodeJS
     get_url:
       url: "{{ node_url }}"
       dest: "{{ admin_home }}"
-      checksum: sha256:7210712073cc47aef684e8968e18d7a47cce7ba57e80e4cc10f328a8bbbc9aef
+      checksum: "{{ node_checksum }}"
     tags: [never, configure]
   
   - name: Extract NodeJS
@@ -131,8 +129,7 @@
 
   - name: Clone Repo
     git:
-      repo: https://github.com/comptonben/nodejs_puppeteer
-      version: ansible_setup
+      repo: https://github.com/toucomtech/nodejs_puppeteer
       dest: "{{ admin_home }}/nodejs_puppeteer"
     tags: [never, configure]
 
