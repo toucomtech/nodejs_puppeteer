@@ -74,7 +74,7 @@ def main():
 				for i in range(5,0,-1):
 					sys.stdout.write(str(i)+' ')
 					sys.stdout.flush()
-					time.sleep(1)
+					time.sleep(1
 				print('')
 				#TODO: Remove, seems not to be working
 				out = subprocess.run(['nmcli','network','connectivity','check'], stdout=subprocess.PIPE)
@@ -98,7 +98,7 @@ def main():
 					if(con[1] == '802-11-wireless'):
 						uuid = con[2]
 						# Remove connection profile
-						out  = subprocess.run(['nmcli','conn','delete',ssid])
+						out  = subprocess.run(['nmcli','conn','delete',uuid])
 			else:
 				print("Couldn't connect to {} or too slow".format(ssid))
 # call main()
