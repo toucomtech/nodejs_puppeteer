@@ -74,7 +74,7 @@ def main():
 				for i in range(5,0,-1):
 					sys.stdout.write(str(i)+' ')
 					sys.stdout.flush()
-					time.sleep(1
+					time.sleep(1)
 				print('')
 				#TODO: Remove, seems not to be working
 				out = subprocess.run(['nmcli','network','connectivity','check'], stdout=subprocess.PIPE)
@@ -86,7 +86,7 @@ def main():
 				## CALL PUPPET ##
 				print("---- RUNNING PUPPETEER ----")
 				# Will run index.js in /puppeteer
-				subprocess.run(['node','../puppeteer/'])
+				subprocess.run(['node','./../'])
 				## ----------- ##
 				#disconnect from network
 				out = subprocess.run(['nmcli','dev','disconnect','wlan0'])
