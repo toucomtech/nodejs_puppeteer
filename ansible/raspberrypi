@@ -1,1 +1,1 @@
-pi ansible_host=raspberrypi.cinci.rr.com
+pi ansible_host=raspberrypi.local
