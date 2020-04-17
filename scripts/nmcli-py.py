@@ -20,9 +20,16 @@ def main():
 	out  = subprocess.run(['nmcli','--terse','dev'],stdout=subprocess.PIPE)
 	lines = out.stdout.decode("utf-8").split('\n')
 	#print(lines)
-	wifi_interface = lines[1].split(":")
-	state = wifi_interface[2]
-	print("INTERFACE={} | STATE={}".format(wifi_interface[1],state))
+	state = None
+	for i in lines:
+		info = i.split(':')
+		#print(info)
+		if len(info)<1:
+			break
+		if info[1] == 'wifi':
+			state = info[2]
+			break
+	print("INTERFACE=wifi | STATE={}".format(state))
 
 	if state =='disconnected':
 		# Force scan
@@ -40,7 +47,6 @@ def main():
 		if open_aps != []:
 			# let's try to connect to the first one
 			ssid = open_aps[0][0]
-			#TODO: store connection UUID
 			out = subprocess.run(['nmcli','dev','wifi','connect',ssid])
 			# Connected?
 			conn = False
@@ -48,7 +54,15 @@ def main():
 				out  = subprocess.run(['nmcli','--terse','dev'],stdout=subprocess.PIPE)
 				lines = out.stdout.decode("utf-8").split('\n')
 				#print(lines)
-				state = lines[1].split(':')[2]
+				state = None
+				for inter in lines:
+					info = inter.split(':')
+					#print(info)
+					if len(info)<1:
+						break
+					if info[1] == 'wifi':
+						state = info[2]
+						break
 				if state == 'connected':
 					conn = True
 					break
@@ -61,17 +75,30 @@ def main():
 					sys.stdout.write(str(i)+' ')
 					sys.stdout.flush()
 					time.sleep(1)
-				print()
+				print('')
+				#TODO: Remove, seems not to be working
+				out = subprocess.run(['nmcli','network','connectivity','check'], stdout=subprocess.PIPE)
+				ccnt = out.stdout.decode('utf-8').split('\n')[0]
+				print('Connectivity [{}]'.format(ccnt))
+				#if ccnt != 'full':
+				#	print('Sending data... [MOCK]');
+				#elif:
 				## CALL PUPPET ##
 				print("---- RUNNING PUPPETEER ----")
-				subprocess.run(['node','../pup/'])
+				# Will run index.js in /puppeteer
+				subprocess.run(['node','./../'])
 				## ----------- ##
-
 				#disconnect from network
 				out = subprocess.run(['nmcli','dev','disconnect','wlan0'])
-				# Remove connection profile
-				# TODO: Use connection UUID instead
-				out  = subprocess.run(['nmcli','conn','delete',ssid])
+				# Get WIFI connection UUID
+				out = subprocess.run(['nmcli','--terse','-f','NAME,TYPE,UUID','conn','show'],stdout=subprocess.PIPE)
+				lines = out.stdout.decode('utf-8').split('\n')
+				for l in lines:
+					con = l.split(':')
+					if(con[1] == '802-11-wireless'):
+						uuid = con[2]
+						# Remove connection profile
+						out  = subprocess.run(['nmcli','conn','delete',uuid])
 			else:
 				print("Couldn't connect to {} or too slow".format(ssid))
 # call main()
